@@ -19,7 +19,7 @@ export function PurchasePage() {
   const [selectedProduct, setSelectedProduct] = useState<Id<"products"> | null>(null);
   const [selectedName, setSelectedName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [costPerUnit, setCostPerUnit] = useState("");
+  const [totalCost, setTotalCost] = useState("");
   const [tax, setTax] = useState("");
   const [supplier, setSupplier] = useState("");
   const [error, setError] = useState("");
@@ -35,20 +35,26 @@ export function PurchasePage() {
   const recentOrders = useQuery(api.purchases.listRecent, {});
 
   // Fix #6: Auto-fill last purchase price when product is selected
+  // lastPrice is per-unit in paisa from the DB
   const lastPrice = useQuery(
     api.purchases.getLastPrice,
     selectedProduct ? { productId: selectedProduct } : "skip"
   );
+  // Auto-fill totalCost = lastPrice * qty when both are available
   useEffect(() => {
-    if (lastPrice != null && !costPerUnit) {
-      setCostPerUnit(String(lastPrice / 100));
+    if (lastPrice != null && !totalCost) {
+      const qty = parseInt(quantity);
+      if (qty > 0) {
+        setTotalCost(String((lastPrice * qty) / 100));
+      }
+      // If quantity not set yet, don't auto-fill — wait until qty is entered
     }
-  }, [lastPrice]);
+  }, [lastPrice, quantity]);
 
   const addItem = () => {
-    if (!selectedProduct || !quantity || !costPerUnit) return;
+    if (!selectedProduct || !quantity || !totalCost) return;
     const qty = parseInt(quantity);
-    const cost = parseFloat(costPerUnit);
+    const cost = parseFloat(totalCost);
     if (qty <= 0 || cost <= 0) return;
 
     setItems((prev) => [
@@ -58,13 +64,13 @@ export function PurchasePage() {
         productId: selectedProduct,
         productName: selectedName,
         quantity: qty,
-        pricePerUnit: toPaisa(cost),
+        pricePerUnit: Math.round(toPaisa(cost) / qty),
       },
     ]);
     setSelectedProduct(null);
     setSelectedName("");
     setQuantity("");
-    setCostPerUnit("");
+    setTotalCost("");
   };
 
   const subtotal = items.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
@@ -133,7 +139,7 @@ export function PurchasePage() {
           <Label className="text-xs text-muted-foreground">आइटम जोड़ें</Label>
           <ProductPicker
             value={selectedProduct}
-            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); setCostPerUnit(""); }}
+            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); setTotalCost(""); }}
             onRequestNewProduct={() => setShowAddProduct(true)}
           />
           <div className="flex gap-2">
@@ -151,9 +157,9 @@ export function PurchasePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
                 <Input
                   type="number"
-                  placeholder="लागत/इकाई"
-                  value={costPerUnit}
-                  onChange={(e) => setCostPerUnit(e.target.value)}
+                  placeholder="कुल राशि"
+                  value={totalCost}
+                  onChange={(e) => setTotalCost(e.target.value)}
                   className="pl-7 h-11"
                 />
               </div>
@@ -168,7 +174,7 @@ export function PurchasePage() {
         <CartItemList
           items={items}
           onRemove={(id) => setItems((prev) => prev.filter((i) => i.id !== id))}
-          priceLabel="लागत"
+          priceLabel="कुल"
         />
 
         {/* Tax + Supplier */}
@@ -278,7 +284,7 @@ export function PurchasePage() {
           </p>
           <DialogFooter className="flex-row gap-2">
             <Button variant="outline" onClick={() => setConfirmSubmit(false)} className="flex-1">रद्द करें</Button>
-            <Button onClick={handleSubmit} className="flex-1">हाँ, दर्ज करें</Button>
+            <Button onClick={handleSubmit} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">हाँ, दर्ज करें</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -292,7 +298,7 @@ export function PurchasePage() {
           <p className="text-sm text-muted-foreground">यह खरीद और उसके सभी आइटम हटा दिए जाएँगे।</p>
           <DialogFooter className="flex-row gap-2">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1">रद्द करें</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1">हटाएँ</Button>
+            <Button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1 bg-red-600 text-white hover:bg-red-700">हटाएँ</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

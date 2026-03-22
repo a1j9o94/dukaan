@@ -73,19 +73,20 @@ export const listWithStock = query({
 
       const stock = totalPurchased - totalSold;
 
-      // Calculate weighted average cost (including tax allocation)
+      // Calculate weighted average cost (including weighted tax allocation)
       let totalCost = 0;
       for (const pi of purchaseItems) {
         const order = await ctx.db.get(pi.orderId);
         if (!order) continue;
-        // Get all items in this order to compute tax allocation
+        // Weighted tax: this item's share of tax = (item cost / total order cost) * total tax
         const orderItems = await ctx.db
           .query("purchaseItems")
           .withIndex("by_orderId", (q) => q.eq("orderId", pi.orderId))
           .take(100);
-        const totalQtyInOrder = orderItems.reduce((s, i) => s + i.quantity, 0);
-        const taxPerUnit = totalQtyInOrder > 0 ? order.taxAmount / totalQtyInOrder : 0;
-        totalCost += pi.quantity * (pi.costPerUnit + taxPerUnit);
+        const totalOrderCost = orderItems.reduce((s, i) => s + i.quantity * i.costPerUnit, 0);
+        const itemLineCost = pi.quantity * pi.costPerUnit;
+        const taxForItem = totalOrderCost > 0 ? (itemLineCost / totalOrderCost) * order.taxAmount : 0;
+        totalCost += itemLineCost + taxForItem;
       }
       const avgCost = totalPurchased > 0 ? Math.round(totalCost / totalPurchased) : 0;
 

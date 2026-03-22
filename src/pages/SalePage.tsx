@@ -18,7 +18,7 @@ export function SalePage() {
   const [selectedProduct, setSelectedProduct] = useState<Id<"products"> | null>(null);
   const [selectedName, setSelectedName] = useState("");
   const [quantity, setQuantity] = useState("");
-  const [salePrice, setSalePrice] = useState("");
+  const [totalSalePrice, setTotalSalePrice] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [confirmSubmit, setConfirmSubmit] = useState(false);
@@ -32,20 +32,26 @@ export function SalePage() {
   const lastTransaction = useQuery(api.sales.getLastTransaction, {});
 
   // Fix #6: Auto-fill last sale price when product is selected
+  // lastSalePrice is per-unit in paisa from the DB
   const lastSalePrice = useQuery(
     api.sales.getLastSalePrice,
     selectedProduct ? { productId: selectedProduct } : "skip"
   );
+  // Auto-fill totalSalePrice = lastSalePrice * qty when both are available
   useEffect(() => {
-    if (lastSalePrice != null && !salePrice) {
-      setSalePrice(String(lastSalePrice / 100));
+    if (lastSalePrice != null && !totalSalePrice) {
+      const qty = parseInt(quantity);
+      if (qty > 0) {
+        setTotalSalePrice(String((lastSalePrice * qty) / 100));
+      }
+      // If quantity not set yet, don't auto-fill — wait until qty is entered
     }
-  }, [lastSalePrice]);
+  }, [lastSalePrice, quantity]);
 
   const addItem = () => {
-    if (!selectedProduct || !quantity || !salePrice) return;
+    if (!selectedProduct || !quantity || !totalSalePrice) return;
     const qty = parseInt(quantity);
-    const price = parseFloat(salePrice);
+    const price = parseFloat(totalSalePrice);
     if (qty <= 0 || price <= 0) return;
 
     setItems((prev) => [
@@ -55,13 +61,13 @@ export function SalePage() {
         productId: selectedProduct,
         productName: selectedName,
         quantity: qty,
-        pricePerUnit: toPaisa(price),
+        pricePerUnit: Math.round(toPaisa(price) / qty),
       },
     ]);
     setSelectedProduct(null);
     setSelectedName("");
     setQuantity("");
-    setSalePrice("");
+    setTotalSalePrice("");
   };
 
   const total = items.reduce((s, i) => s + i.quantity * i.pricePerUnit, 0);
@@ -146,7 +152,7 @@ export function SalePage() {
           <Label className="text-xs text-muted-foreground">आइटम जोड़ें</Label>
           <ProductPicker
             value={selectedProduct}
-            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); setSalePrice(""); }}
+            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); setTotalSalePrice(""); }}
             showStock
           />
           <div className="flex gap-2">
@@ -164,9 +170,9 @@ export function SalePage() {
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
                 <Input
                   type="number"
-                  placeholder="बिक्री मूल्य"
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(e.target.value)}
+                  placeholder="कुल राशि"
+                  value={totalSalePrice}
+                  onChange={(e) => setTotalSalePrice(e.target.value)}
                   className="pl-7 h-11"
                 />
               </div>
@@ -264,7 +270,7 @@ export function SalePage() {
           </div>
           <DialogFooter className="flex-row gap-2">
             <Button variant="outline" onClick={() => setConfirmSubmit(false)} className="flex-1">रद्द करें</Button>
-            <Button onClick={handleSubmit} className="flex-1">हाँ, दर्ज करें</Button>
+            <Button onClick={handleSubmit} className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90">हाँ, दर्ज करें</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -278,7 +284,7 @@ export function SalePage() {
           <p className="text-sm text-muted-foreground">यह बिक्री और उसके सभी आइटम हटा दिए जाएँगे। स्टॉक वापस आ जाएगा।</p>
           <DialogFooter className="flex-row gap-2">
             <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1">रद्द करें</Button>
-            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1">हटाएँ</Button>
+            <Button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1 bg-red-600 text-white hover:bg-red-700">हटाएँ</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
