@@ -62,7 +62,7 @@ export function ProductPicker({ value, onChange, showStock = false, onRequestNew
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 z-[60] mt-1 rounded-md border bg-popover shadow-lg max-h-60 overflow-hidden">
+        <div className="absolute left-0 right-0 z-[60] mt-1 rounded-md border bg-white shadow-lg max-h-60 overflow-hidden">
           <div className="p-2 border-b">
             <input
               type="text"
