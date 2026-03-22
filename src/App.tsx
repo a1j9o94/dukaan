@@ -1,21 +1,23 @@
+import { Routes, Route } from "react-router-dom";
+import { TabBar } from "@/components/TabBar";
+import { InventoryPage } from "@/pages/InventoryPage";
+import { PurchasePage } from "@/pages/PurchasePage";
+import { SalePage } from "@/pages/SalePage";
+import { ReportsPage } from "@/pages/ReportsPage";
+import "@/styles/globals.css";
+
 export function App() {
   return (
-    <div style={{
-      minHeight: "100dvh",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontFamily: "'Noto Sans Devanagari', system-ui, sans-serif",
-      background: "#fafaf9",
-    }}>
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "#c2410c" }}>
-          दुकान
-        </h1>
-        <p style={{ color: "#78716c", marginTop: "0.5rem" }}>
-          इन्वेंटरी और हिसाब-किताब
-        </p>
+    <div className="min-h-[100dvh] bg-background pb-16">
+      <div className="mx-auto max-w-lg">
+        <Routes>
+          <Route path="/" element={<InventoryPage />} />
+          <Route path="/purchase" element={<PurchasePage />} />
+          <Route path="/sell" element={<SalePage />} />
+          <Route path="/reports" element={<ReportsPage />} />
+        </Routes>
       </div>
+      <TabBar />
     </div>
   );
 }
