@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatINR, toPaisa, formatDateTime } from "@/lib/format";
+import { extractError } from "@/lib/errors";
 import { Plus, Trash2, RotateCcw } from "lucide-react";
 
 export function SalePage() {
@@ -94,7 +95,7 @@ export function SalePage() {
       setSuccess("बिक्री दर्ज हो गई ✓");
       setTimeout(() => { setUndoId(null); setSuccess(""); }, 5000);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "त्रुटि हुई");
+      setError(extractError(e));
     }
   };
 
