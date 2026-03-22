@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -13,6 +13,7 @@ interface ProductPickerProps {
 export function ProductPicker({ value, onChange, showStock = false }: ProductPickerProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const products = useQuery(api.products.listWithStock, {});
 
@@ -25,29 +26,42 @@ export function ProductPicker({ value, onChange, showStock = false }: ProductPic
 
   const selected = products?.find((p) => p._id === value);
 
+  // Close on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-[44px]"
       >
         {selected ? (
-          <span className="flex items-center gap-2">
-            <span>{selected.name}</span>
-            <span className="text-muted-foreground font-mono text-xs">{selected.sku}</span>
+          <span className="flex items-center gap-2 truncate">
+            <span className="truncate">{selected.name}</span>
+            <span className="text-muted-foreground font-mono text-xs shrink-0">{selected.sku}</span>
             {showStock && (
-              <span className="text-xs text-emerald-600">({selected.stock} उपलब्ध)</span>
+              <span className="text-xs text-emerald-600 shrink-0">({selected.stock} उपलब्ध)</span>
             )}
           </span>
         ) : (
           <span className="text-muted-foreground">उत्पाद चुनें</span>
         )}
-        <span className="text-muted-foreground">▼</span>
+        <span className="text-muted-foreground shrink-0 ml-2">▼</span>
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-60 overflow-hidden">
+        <div className="absolute left-0 right-0 z-[60] mt-1 rounded-md border bg-popover shadow-lg max-h-60 overflow-hidden">
           <div className="p-2 border-b">
             <input
               type="text"
@@ -75,14 +89,14 @@ export function ProductPicker({ value, onChange, showStock = false }: ProductPic
                   }}
                   className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-accent active:bg-accent text-left"
                 >
-                  <div>
-                    <div className="font-medium">{p.name}</div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{p.name}</div>
                     <div className="text-xs text-muted-foreground">
                       {CATEGORY_LABEL[p.category as Category]} · {p.sku}
                     </div>
                   </div>
                   {showStock && (
-                    <span className="text-xs tabular-nums text-muted-foreground">
+                    <span className="text-xs tabular-nums text-muted-foreground shrink-0 ml-2">
                       {p.stock} उपलब्ध
                     </span>
                   )}

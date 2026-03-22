@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -21,6 +21,7 @@ export function SalePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  useEffect(() => { document.title = "दुकान — बिक्री"; }, []);
   const createTransaction = useMutation(api.sales.createTransaction);
   const recentSales = useQuery(api.sales.listRecent, {});
 
@@ -125,7 +126,7 @@ export function SalePage() {
             <Card className="p-3">
               <div className="flex justify-between items-center text-sm">
                 <span className="text-muted-foreground">
-                  {items.reduce((s, i) => s + i.quantity, 0)} items | कुल
+                  {items.reduce((s, i) => s + i.quantity, 0)} आइटम | कुल
                 </span>
                 <span className="font-bold text-lg">{formatINR(total)}</span>
               </div>
@@ -151,7 +152,7 @@ export function SalePage() {
                     <div>
                       <div className="text-xs text-muted-foreground">{formatDateTime(txn.soldAt)}</div>
                       <div className="text-xs text-muted-foreground">
-                        {txn.itemCount} items · {txn.items.map((i) => i.productName).join(", ")}
+                        {txn.itemCount} आइटम · {txn.items.map((i) => i.productName).join(", ")}
                       </div>
                     </div>
                     <div className="text-sm font-bold tabular-nums text-emerald-600">

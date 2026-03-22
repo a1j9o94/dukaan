@@ -55,11 +55,11 @@ export function AddProductSheet() {
           नया उत्पाद
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-2xl">
+      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85dvh] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>नया उत्पाद जोड़ें</SheetTitle>
         </SheetHeader>
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4 pb-6">
           <div>
             <Label>नाम</Label>
             <Input

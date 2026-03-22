@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { PageHeader } from "@/components/PageHeader";
@@ -14,6 +14,7 @@ import { CATEGORY_LABEL, EXPENSE_CATEGORIES, type Category } from "@/lib/constan
 import { cn } from "@/lib/utils";
 
 export function ReportsPage() {
+  useEffect(() => { document.title = "दुकान — रिपोर्ट"; }, []);
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -121,7 +122,7 @@ export function ReportsPage() {
                   <div className="text-sm truncate">{event.description}</div>
                   <div className="text-xs text-muted-foreground">
                     {formatDateTime(event.timestamp)}
-                    {event.itemCount != null && ` · ${event.itemCount} items`}
+                    {event.itemCount != null && ` · ${event.itemCount} आइटम`}
                   </div>
                 </div>
                 <div className={cn(

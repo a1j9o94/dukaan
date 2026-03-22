@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { PageHeader } from "@/components/PageHeader";
@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 
 export function InventoryPage() {
   const [filter, setFilter] = useState<Category | "all">("all");
+
+  useEffect(() => { document.title = "दुकान — इन्वेंटरी"; }, []);
 
   const products = useQuery(api.products.listWithStock, {
     category: filter === "all" ? undefined : filter,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
@@ -24,6 +24,7 @@ export function PurchasePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  useEffect(() => { document.title = "दुकान — स्टॉक जोड़ें"; }, []);
   const createOrder = useMutation(api.purchases.createOrder);
   const recentOrders = useQuery(api.purchases.listRecent, {});
 
@@ -157,7 +158,7 @@ export function PurchasePage() {
             {/* Total */}
             <div className="flex justify-between items-center pt-2 border-t text-sm">
               <span className="text-muted-foreground">
-                {items.reduce((s, i) => s + i.quantity, 0)} items | कुल
+                {items.reduce((s, i) => s + i.quantity, 0)} आइटम | कुल
               </span>
               <span className="font-bold text-lg">{formatINR(total)}</span>
             </div>
@@ -187,7 +188,7 @@ export function PurchasePage() {
                         <div className="text-sm font-medium">{order.supplierName}</div>
                       )}
                       <div className="text-xs text-muted-foreground">
-                        {order.itemCount} items
+                        {order.itemCount} आइटम
                         {order.taxAmount > 0 && ` · कर ${formatINR(order.taxAmount)}`}
                       </div>
                     </div>
