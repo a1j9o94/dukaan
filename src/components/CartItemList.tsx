@@ -21,13 +21,13 @@ export function CartItemList({ items, onRemove, priceLabel = "मूल्य" }
 
   return (
     <div className="space-y-1">
-      <div className="text-xs font-medium text-muted-foreground px-1">
+      <div className="text-xs font-medium text-muted-foreground px-1 mb-2">
         {items.length} आइटम
       </div>
       {items.map((item) => (
         <div
           key={item.id}
-          className="flex items-center justify-between rounded-lg border bg-card px-3 py-2"
+          className="flex items-center justify-between rounded-lg border bg-card p-3"
         >
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium truncate">{item.productName}</div>

@@ -15,7 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({ name, sku, category, type, stock, avgCost }: ProductCardProps) {
   return (
-    <Card className="p-3">
+    <Card className="p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 mb-0.5">
@@ -45,7 +45,7 @@ export function ProductCard({ name, sku, category, type, stock, avgCost }: Produ
         </div>
         <div
           className={cn(
-            "text-2xl font-bold tabular-nums min-w-[48px] text-right",
+            "text-3xl font-bold tabular-nums min-w-[48px] text-right",
             stock > 0 ? "text-emerald-600" : "text-destructive"
           )}
         >

@@ -69,11 +69,11 @@ export function ProductPicker({ value, onChange, showStock = false, onRequestNew
               placeholder="खोजें..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-2 py-1.5 text-sm bg-transparent outline-none"
+              className="w-full px-2 py-2 text-sm bg-transparent outline-none h-11"
               autoFocus
             />
           </div>
-          <div className="max-h-48 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto pt-1">
             {!filtered || filtered.length === 0 ? (
               <div className="p-3 text-sm text-muted-foreground text-center">
                 कोई उत्पाद नहीं मिला
@@ -88,7 +88,7 @@ export function ProductPicker({ value, onChange, showStock = false, onRequestNew
                     setOpen(false);
                     setSearch("");
                   }}
-                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm hover:bg-accent active:bg-accent text-left"
+                  className="w-full flex items-center justify-between px-3 py-3 text-sm hover:bg-accent active:bg-accent text-left border-b last:border-0"
                 >
                   <div className="min-w-0">
                     <div className="font-medium truncate">{p.name}</div>
@@ -112,7 +112,7 @@ export function ProductPicker({ value, onChange, showStock = false, onRequestNew
                   setSearch("");
                   onRequestNewProduct();
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-primary font-medium hover:bg-accent active:bg-accent border-t"
+                className="w-full flex items-center gap-2 px-3 py-3 text-sm text-primary font-semibold hover:bg-accent active:bg-accent border-t"
               >
                 <Plus className="h-4 w-4" />
                 नया उत्पाद जोड़ें

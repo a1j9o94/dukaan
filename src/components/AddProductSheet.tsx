@@ -73,7 +73,7 @@ export function AddProductSheet({ externalOpen, onExternalClose }: AddProductShe
       <SheetHeader>
         <SheetTitle>नया उत्पाद जोड़ें</SheetTitle>
       </SheetHeader>
-      <div className="space-y-4 mt-4 pb-8">
+      <div className="space-y-5 mt-4 pb-8 px-4">
         <div>
           <Label>नाम</Label>
           <Input

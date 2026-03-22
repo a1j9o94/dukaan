@@ -14,7 +14,7 @@ export function TabBar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card shadow-[0_-1px_3px_rgba(0,0,0,0.08)]">
       <div className="mx-auto flex max-w-lg">
         {TABS.map((tab) => {
           const isActive = location.pathname === tab.path;
@@ -25,14 +25,14 @@ export function TabBar() {
               onClick={() => navigate(tab.path)}
               className={cn(
                 "flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors",
-                "min-h-[56px] active:bg-accent",
+                "min-h-[60px] active:bg-accent",
                 isActive
                   ? "text-primary font-semibold"
                   : "text-muted-foreground"
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive && "text-primary")} />
-              <span>{tab.label}</span>
+              <Icon className={cn(isActive ? "h-6 w-6" : "h-5 w-5", isActive && "text-primary")} />
+              <span className={cn(isActive && "text-[13px]")}>{tab.label}</span>
             </button>
           );
         })}
