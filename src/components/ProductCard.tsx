@@ -23,6 +23,14 @@ export function ProductCard({ name, sku, category, type, stock, avgCost }: Produ
             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">
               {type}
             </Badge>
+            {stock > 0 && stock < 5 && (
+              <Badge
+                className="text-[10px] px-1.5 py-0 shrink-0 bg-amber-100 text-amber-800 border-amber-300"
+                variant="outline"
+              >
+                कम स्टॉक
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{CATEGORY_LABEL[category as Category] ?? category}</span>

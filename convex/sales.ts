@@ -57,6 +57,90 @@ export const createTransaction = mutation({
   },
 });
 
+export const deleteTransaction = mutation({
+  args: {
+    transactionId: v.id("saleTransactions"),
+  },
+  handler: async (ctx, args) => {
+    // Delete all saleItems for this transaction
+    const items = await ctx.db
+      .query("saleItems")
+      .withIndex("by_transactionId", (q) => q.eq("transactionId", args.transactionId))
+      .take(500);
+    for (const item of items) {
+      await ctx.db.delete(item._id);
+    }
+    // Delete the transaction itself
+    await ctx.db.delete(args.transactionId);
+  },
+});
+
+export const getLastSalePrice = query({
+  args: {
+    productId: v.id("products"),
+  },
+  handler: async (ctx, args) => {
+    const items = await ctx.db
+      .query("saleItems")
+      .withIndex("by_productId", (q) => q.eq("productId", args.productId))
+      .take(500);
+
+    if (items.length === 0) {
+      return null;
+    }
+
+    // For each item, look up the transaction to get soldAt
+    let latest: { salePricePerUnit: number; soldAt: number } | null = null;
+    for (const item of items) {
+      const txn = await ctx.db.get(item.transactionId);
+      if (!txn) continue;
+      if (latest === null || txn.soldAt > latest.soldAt) {
+        latest = { salePricePerUnit: item.salePricePerUnit, soldAt: txn.soldAt };
+      }
+    }
+
+    return latest ? latest.salePricePerUnit : null;
+  },
+});
+
+export const getLastTransaction = query({
+  args: {},
+  handler: async (ctx) => {
+    const transactions = await ctx.db
+      .query("saleTransactions")
+      .withIndex("by_soldAt")
+      .order("desc")
+      .take(1);
+
+    if (transactions.length === 0) {
+      return null;
+    }
+
+    const txn = transactions[0];
+    const items = await ctx.db
+      .query("saleItems")
+      .withIndex("by_transactionId", (q) => q.eq("transactionId", txn._id))
+      .take(50);
+
+    const enrichedItems = [];
+    let total = 0;
+    for (const item of items) {
+      const product = await ctx.db.get(item.productId);
+      total += item.quantity * item.salePricePerUnit;
+      enrichedItems.push({
+        ...item,
+        productName: product?.name ?? "—",
+      });
+    }
+
+    return {
+      ...txn,
+      items: enrichedItems,
+      total,
+    };
+  },
+});
+
 export const listRecent = query({
   args: {},
   handler: async (ctx) => {

@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { formatINR, toPaisa, formatDateTime } from "@/lib/format";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 export function PurchasePage() {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -24,10 +25,25 @@ export function PurchasePage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const [confirmSubmit, setConfirmSubmit] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<Id<"purchaseOrders"> | null>(null);
+  const [undoId, setUndoId] = useState<Id<"purchaseOrders"> | null>(null);
 
   useEffect(() => { document.title = "दुकान — स्टॉक जोड़ें"; }, []);
   const createOrder = useMutation(api.purchases.createOrder);
+  const deleteOrder = useMutation(api.purchases.deleteOrder);
   const recentOrders = useQuery(api.purchases.listRecent, {});
+
+  // Fix #6: Auto-fill last purchase price when product is selected
+  const lastPrice = useQuery(
+    api.purchases.getLastPrice,
+    selectedProduct ? { productId: selectedProduct } : "skip"
+  );
+  useEffect(() => {
+    if (lastPrice != null && !costPerUnit) {
+      setCostPerUnit(String(lastPrice / 100));
+    }
+  }, [lastPrice]);
 
   const addItem = () => {
     if (!selectedProduct || !quantity || !costPerUnit) return;
@@ -56,6 +72,7 @@ export function PurchasePage() {
   const total = subtotal + taxPaisa;
 
   const handleSubmit = async () => {
+    setConfirmSubmit(false);
     setError("");
     setSuccess("");
     if (items.length === 0) {
@@ -63,7 +80,7 @@ export function PurchasePage() {
       return;
     }
     try {
-      await createOrder({
+      const orderId = await createOrder({
         items: items.map((i) => ({
           productId: i.productId as Id<"products">,
           quantity: i.quantity,
@@ -76,10 +93,33 @@ export function PurchasePage() {
       setItems([]);
       setTax("");
       setSupplier("");
+      // Fix #2: Undo — show undo option for 5 seconds
+      setUndoId(orderId);
       setSuccess("खरीद दर्ज हो गई ✓");
-      setTimeout(() => setSuccess(""), 3000);
+      setTimeout(() => { setUndoId(null); setSuccess(""); }, 5000);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "त्रुटि हुई");
+    }
+  };
+
+  const handleUndo = async () => {
+    if (!undoId) return;
+    try {
+      await deleteOrder({ orderId: undoId });
+      setUndoId(null);
+      setSuccess("खरीद वापस ली गई");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch {
+      setError("वापस लेने में त्रुटि");
+    }
+  };
+
+  const handleDelete = async (orderId: Id<"purchaseOrders">) => {
+    setDeleteConfirm(null);
+    try {
+      await deleteOrder({ orderId });
+    } catch {
+      setError("हटाने में त्रुटि");
     }
   };
 
@@ -93,7 +133,7 @@ export function PurchasePage() {
           <Label className="text-xs text-muted-foreground">आइटम जोड़ें</Label>
           <ProductPicker
             value={selectedProduct}
-            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); }}
+            onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); setCostPerUnit(""); }}
             onRequestNewProduct={() => setShowAddProduct(true)}
           />
           <div className="flex gap-2">
@@ -168,15 +208,26 @@ export function PurchasePage() {
         )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
-        {success && <p className="text-sm text-emerald-600 font-medium">{success}</p>}
+        {/* Fix #2: Undo toast */}
+        {success && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-emerald-600 font-medium">{success}</p>
+            {undoId && (
+              <Button variant="outline" size="sm" onClick={handleUndo}>
+                वापस लें
+              </Button>
+            )}
+          </div>
+        )}
 
+        {/* Fix #5: Confirmation before submit */}
         {items.length > 0 && (
-          <Button onClick={handleSubmit} className="w-full" size="lg">
+          <Button onClick={() => setConfirmSubmit(true)} className="w-full" size="lg">
             खरीद दर्ज करें
           </Button>
         )}
 
-        {/* Recent purchases */}
+        {/* Recent purchases with delete */}
         {recentOrders && recentOrders.length > 0 && (
           <div className="pt-4 border-t">
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">हाल की खरीदारी</h3>
@@ -184,7 +235,7 @@ export function PurchasePage() {
               {recentOrders.map((order) => (
                 <Card key={order._id} className="p-3">
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="text-xs text-muted-foreground">{formatDateTime(order.purchasedAt)}</div>
                       {order.supplierName && (
                         <div className="text-sm font-medium">{order.supplierName}</div>
@@ -194,7 +245,17 @@ export function PurchasePage() {
                         {order.taxAmount > 0 && ` · कर ${formatINR(order.taxAmount)}`}
                       </div>
                     </div>
-                    <div className="text-sm font-bold tabular-nums">{formatINR(order.total)}</div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-sm font-bold tabular-nums">{formatINR(order.total)}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteConfirm(order._id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               ))}
@@ -203,8 +264,38 @@ export function PurchasePage() {
         )}
       </div>
 
-      {/* Inline add product sheet (triggered from product picker) */}
+      {/* Inline add product sheet */}
       <AddProductSheet externalOpen={showAddProduct} onExternalClose={() => setShowAddProduct(false)} />
+
+      {/* Fix #5: Confirm dialog */}
+      <Dialog open={confirmSubmit} onOpenChange={setConfirmSubmit}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>खरीद दर्ज करें?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {items.reduce((s, i) => s + i.quantity, 0)} आइटम · कुल {formatINR(total)}
+          </p>
+          <DialogFooter className="flex-row gap-2">
+            <Button variant="outline" onClick={() => setConfirmSubmit(false)} className="flex-1">रद्द करें</Button>
+            <Button onClick={handleSubmit} className="flex-1">हाँ, दर्ज करें</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Fix #1: Delete confirm dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>खरीद हटाएँ?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">यह खरीद और उसके सभी आइटम हटा दिए जाएँगे।</p>
+          <DialogFooter className="flex-row gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="flex-1">रद्द करें</Button>
+            <Button variant="destructive" onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="flex-1">हटाएँ</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

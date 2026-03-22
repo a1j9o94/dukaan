@@ -1,0 +1,18 @@
+{
+  "name": "दुकान — इन्वेंटरी और हिसाब",
+  "short_name": "दुकान",
+  "description": "कपड़े की दुकान के लिए इन्वेंटरी और लाभ-हानि ट्रैकर",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#c2410c",
+  "orientation": "portrait",
+  "lang": "hi",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏪</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

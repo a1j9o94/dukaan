@@ -1,6 +1,41 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 
+export const todaySummary = query({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+    // Compute midnight-to-midnight boundaries for today (local-ish via UTC)
+    const todayStart = now - (now % 86_400_000);
+    const todayEnd = todayStart + 86_400_000;
+
+    const transactions = await ctx.db
+      .query("saleTransactions")
+      .withIndex("by_soldAt", (q) => q.gte("soldAt", todayStart).lt("soldAt", todayEnd))
+      .take(500);
+
+    let revenue = 0;
+    let itemsSold = 0;
+
+    for (const txn of transactions) {
+      const items = await ctx.db
+        .query("saleItems")
+        .withIndex("by_transactionId", (q) => q.eq("transactionId", txn._id))
+        .take(50);
+      for (const item of items) {
+        revenue += item.quantity * item.salePricePerUnit;
+        itemsSold += item.quantity;
+      }
+    }
+
+    return {
+      salesCount: transactions.length,
+      revenue,
+      itemsSold,
+    };
+  },
+});
+
 export const monthlyPL = query({
   args: {
     start: v.number(),

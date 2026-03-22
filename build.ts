@@ -34,6 +34,20 @@ const result = await Bun.build({
   },
 });
 
+// Copy static assets to dist
+const manifestSrc = path.resolve("src", "manifest.json");
+if (existsSync(manifestSrc)) {
+  await Bun.write(path.join(outdir, "manifest.json"), Bun.file(manifestSrc));
+}
+
+// Inject manifest link into output HTML (after build, to avoid Bun trying to bundle it)
+const indexPath = path.join(outdir, "index.html");
+if (existsSync(indexPath)) {
+  let html = await Bun.file(indexPath).text();
+  html = html.replace("</head>", '  <link rel="manifest" href="/manifest.json">\n  </head>');
+  await Bun.write(indexPath, html);
+}
+
 const end = performance.now();
 
 const formatFileSize = (bytes: number): string => {
