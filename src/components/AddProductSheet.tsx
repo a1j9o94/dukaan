@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -9,8 +9,23 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus } from "lucide-react";
 import { CATEGORIES, TYPES_BY_CATEGORY, SKU_PREFIX, type Category } from "@/lib/constants";
 
-export function AddProductSheet() {
-  const [open, setOpen] = useState(false);
+interface AddProductSheetProps {
+  externalOpen?: boolean;
+  onExternalClose?: () => void;
+}
+
+export function AddProductSheet({ externalOpen, onExternalClose }: AddProductSheetProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = externalOpen ?? internalOpen;
+
+  const setOpen = (val: boolean) => {
+    if (externalOpen !== undefined) {
+      if (!val) onExternalClose?.();
+    } else {
+      setInternalOpen(val);
+    }
+  };
+
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [category, setCategory] = useState<Category | "">("");
@@ -19,11 +34,21 @@ export function AddProductSheet() {
 
   const createProduct = useMutation(api.products.create);
 
+  // Reset form when opening
+  useEffect(() => {
+    if (open) {
+      setName("");
+      setSku("");
+      setCategory("");
+      setType("");
+      setError("");
+    }
+  }, [open]);
+
   const handleCategoryChange = (val: string) => {
     const cat = val as Category;
     setCategory(cat);
     setType("");
-    // Auto-suggest SKU prefix
     if (!sku || Object.values(SKU_PREFIX).some((p) => sku.startsWith(p))) {
       setSku(`${SKU_PREFIX[cat]}-`);
     }
@@ -37,15 +62,89 @@ export function AddProductSheet() {
     }
     try {
       await createProduct({ name: name.trim(), sku: sku.trim(), category, type });
-      setName("");
-      setSku("");
-      setCategory("");
-      setType("");
       setOpen(false);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "त्रुटि हुई");
     }
   };
+
+  const sheetContent = (
+    <SheetContent side="bottom" className="rounded-t-2xl max-h-[85dvh] overflow-y-auto">
+      <SheetHeader>
+        <SheetTitle>नया उत्पाद जोड़ें</SheetTitle>
+      </SheetHeader>
+      <div className="space-y-4 mt-4 pb-8">
+        <div>
+          <Label>नाम</Label>
+          <Input
+            placeholder="उत्पाद का नाम"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1"
+          />
+        </div>
+
+        <div>
+          <Label>श्रेणी</Label>
+          <Select value={category} onValueChange={handleCategoryChange}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="श्रेणी चुनें" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {category && (
+          <div>
+            <Label>प्रकार</Label>
+            <Select value={type} onValueChange={setType}>
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="प्रकार चुनें" />
+              </SelectTrigger>
+              <SelectContent>
+                {TYPES_BY_CATEGORY[category as Category]?.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div>
+          <Label>SKU</Label>
+          <Input
+            placeholder="SAR-001"
+            value={sku}
+            onChange={(e) => setSku(e.target.value)}
+            className="mt-1 font-mono"
+          />
+        </div>
+
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <Button onClick={handleSubmit} className="w-full" size="lg">
+          उत्पाद जोड़ें
+        </Button>
+      </div>
+    </SheetContent>
+  );
+
+  // When externally controlled, no trigger button
+  if (externalOpen !== undefined) {
+    return (
+      <Sheet open={open} onOpenChange={setOpen}>
+        {sheetContent}
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -55,72 +154,7 @@ export function AddProductSheet() {
           नया उत्पाद
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-2xl max-h-[85dvh] overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>नया उत्पाद जोड़ें</SheetTitle>
-        </SheetHeader>
-        <div className="space-y-4 mt-4 pb-6">
-          <div>
-            <Label>नाम</Label>
-            <Input
-              placeholder="उत्पाद का नाम"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-
-          <div>
-            <Label>श्रेणी</Label>
-            <Select value={category} onValueChange={handleCategoryChange}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="श्रेणी चुनें" />
-              </SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map((c) => (
-                  <SelectItem key={c.value} value={c.value}>
-                    {c.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {category && (
-            <div>
-              <Label>प्रकार</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="प्रकार चुनें" />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPES_BY_CATEGORY[category as Category]?.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {t}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <div>
-            <Label>SKU</Label>
-            <Input
-              placeholder="SAR-001"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-              className="mt-1 font-mono"
-            />
-          </div>
-
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <Button onClick={handleSubmit} className="w-full" size="lg">
-            उत्पाद जोड़ें
-          </Button>
-        </div>
-      </SheetContent>
+      {sheetContent}
     </Sheet>
   );
 }

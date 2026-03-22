@@ -48,7 +48,7 @@ export function InventoryPage() {
       </div>
 
       {/* Product list */}
-      <div className="px-4 space-y-2 pb-4">
+      <div className="px-4 space-y-2 pb-24">
         {products === undefined ? (
           <div className="text-center text-muted-foreground py-12">
             लोड हो रहा है...

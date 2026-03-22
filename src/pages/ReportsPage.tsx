@@ -37,7 +37,7 @@ export function ReportsPage() {
     <div>
       <PageHeader title="रिपोर्ट" action={<AddExpenseSheet />} />
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-24">
         {/* Month picker */}
         <div className="flex items-center justify-center gap-4">
           <Button variant="ghost" size="icon" onClick={prevMonth}>

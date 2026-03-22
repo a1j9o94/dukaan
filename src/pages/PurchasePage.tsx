@@ -4,13 +4,13 @@ import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { PageHeader } from "@/components/PageHeader";
 import { ProductPicker } from "@/components/ProductPicker";
+import { AddProductSheet } from "@/components/AddProductSheet";
 import { CartItemList, type CartItem } from "@/components/CartItemList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { formatINR, toPaisa } from "@/lib/format";
-import { formatDateTime } from "@/lib/format";
+import { formatINR, toPaisa, formatDateTime } from "@/lib/format";
 import { Plus } from "lucide-react";
 
 export function PurchasePage() {
@@ -23,6 +23,7 @@ export function PurchasePage() {
   const [supplier, setSupplier] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showAddProduct, setShowAddProduct] = useState(false);
 
   useEffect(() => { document.title = "दुकान — स्टॉक जोड़ें"; }, []);
   const createOrder = useMutation(api.purchases.createOrder);
@@ -86,13 +87,14 @@ export function PurchasePage() {
     <div>
       <PageHeader title="स्टॉक जोड़ें" />
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-24">
         {/* Add item row */}
         <Card className="p-3 space-y-3">
           <Label className="text-xs text-muted-foreground">आइटम जोड़ें</Label>
           <ProductPicker
             value={selectedProduct}
             onChange={(id, name) => { setSelectedProduct(id); setSelectedName(name); }}
+            onRequestNewProduct={() => setShowAddProduct(true)}
           />
           <div className="flex gap-2">
             <div className="flex-1">
@@ -200,6 +202,9 @@ export function PurchasePage() {
           </div>
         )}
       </div>
+
+      {/* Inline add product sheet (triggered from product picker) */}
+      <AddProductSheet externalOpen={showAddProduct} onExternalClose={() => setShowAddProduct(false)} />
     </div>
   );
 }

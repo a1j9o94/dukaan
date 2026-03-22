@@ -3,14 +3,16 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
 import { CATEGORY_LABEL, type Category } from "@/lib/constants";
+import { Plus } from "lucide-react";
 
 interface ProductPickerProps {
   value: Id<"products"> | null;
   onChange: (id: Id<"products">, name: string) => void;
   showStock?: boolean;
+  onRequestNewProduct?: () => void;
 }
 
-export function ProductPicker({ value, onChange, showStock = false }: ProductPickerProps) {
+export function ProductPicker({ value, onChange, showStock = false, onRequestNewProduct }: ProductPickerProps) {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -26,7 +28,6 @@ export function ProductPicker({ value, onChange, showStock = false }: ProductPic
 
   const selected = products?.find((p) => p._id === value);
 
-  // Close on click outside
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -102,6 +103,20 @@ export function ProductPicker({ value, onChange, showStock = false }: ProductPic
                   )}
                 </button>
               ))
+            )}
+            {onRequestNewProduct && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  setSearch("");
+                  onRequestNewProduct();
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-primary font-medium hover:bg-accent active:bg-accent border-t"
+              >
+                <Plus className="h-4 w-4" />
+                नया उत्पाद जोड़ें
+              </button>
             )}
           </div>
         </div>

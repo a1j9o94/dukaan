@@ -77,7 +77,7 @@ export function SalePage() {
     <div>
       <PageHeader title="बिक्री" />
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 pb-24">
         {/* Add item row */}
         <Card className="p-3 space-y-3">
           <Label className="text-xs text-muted-foreground">आइटम जोड़ें</Label>

@@ -14,7 +14,7 @@ export function TabBar() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 border-t bg-card">
       <div className="mx-auto flex max-w-lg">
         {TABS.map((tab) => {
           const isActive = location.pathname === tab.path;
